@@ -35,6 +35,7 @@ class Pyqt5_Serial(QtWidgets.QMainWindow, Ui_MainWindow):
         otherClass = MyDynamicMplCanvas()  # 信号和槽，传送数据给QDialoge
         self.serial_signal.connect(otherClass.robot_position)
         self.serial_signal.emit(0, 0)
+        
 
     def init(self):
         # 串口检测按钮
@@ -68,6 +69,8 @@ class Pyqt5_Serial(QtWidgets.QMainWindow, Ui_MainWindow):
         self.serial_uwb.bytesize = int(8)  # 数据位
         self.serial_uwb.parity = "N"  # 奇偶性，即校验位
         self.serial_uwb.stopbits = int(1)  # 停止位
+
+        # sudo chmod a+rw /dev/ttyACM0 给予权限
 
         try:
             self.serial_uwb.open()
@@ -290,18 +293,16 @@ class MyDynamicMplCanvas(MyMplCanvas):
     def gen_dot(self):
         print("position: (%d" % robot_point[0]+"，%d" % robot_point[1]+")")
 
-        self.compute_initial_figure()
-
-
         # 根据robot的位置，绘制相应砖的全色
-        for k in range(height_num * width_num):
-            if robot_point[0] >= bricks[k][2] and robot_point[0] <= bricks[k][2] + brick_width and robot_point[1] >= bricks[k][3] and robot_point[1] <= bricks[k][3] + brick_height:
-                bricks[k][4] = 1
-                self.fillRectangle = plt.Rectangle(
-                    (bricks[k][2], bricks[k][3]), brick_width, brick_height, linewidth=1, facecolor='y')
-                currentAxis.add_patch(self.fillRectangle)
-            else:
-                bricks[k][4] = 0
+        # self.compute_initial_figure()
+        # for k in range(height_num * width_num):
+        #     if robot_point[0] >= bricks[k][2] and robot_point[0] <= bricks[k][2] + brick_width and robot_point[1] >= bricks[k][3] and robot_point[1] <= bricks[k][3] + brick_height:
+        #         bricks[k][4] = 1
+        #         self.fillRectangle = plt.Rectangle(
+        #             (bricks[k][2], bricks[k][3]), brick_width, brick_height, linewidth=1, facecolor='y')
+        #         currentAxis.add_patch(self.fillRectangle)
+        #     else:
+        #         bricks[k][4] = 0
 
        
         # for brick in bricks:  # 铺完一块砖就覆盖颜色
@@ -341,14 +342,17 @@ class ApplicationWindow(QtWidgets.QDialog):
         dc = MyDynamicMplCanvas(self.main_widget, width=8, height=8, dpi=100)
         l.addWidget(dc)
 
-        self.main_widget.setFocus()
+        # self.main_widget.setFocus()
 
 
 if __name__ == '__main__':
     serial_app = QtWidgets.QApplication(sys.argv)
-    serial_form = Pyqt5_Serial()
-    serial_form.show()
+   
     plot_form = ApplicationWindow()
     plot_form.resize(800, 800)
     plot_form.show()
+
+    serial_form = Pyqt5_Serial()
+    serial_form.show()
+
     sys.exit(serial_app.exec_())

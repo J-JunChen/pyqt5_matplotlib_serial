@@ -14,6 +14,7 @@ import sys
 import os
 import serial
 import serial.tools.list_ports
+# from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import QTimer
 
 # style.use('fivethirtyeight')
@@ -104,7 +105,3 @@ ani = animation.FuncAnimation(
     fig, animate, frames=gen_dot,repeat=True)
 
 plt.show() 
-
-
-if __name__ == "__main__":
-    port_open()
