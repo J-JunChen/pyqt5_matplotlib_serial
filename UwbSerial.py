@@ -201,10 +201,11 @@ class Pyqt5_Serial(QtWidgets.QMainWindow, Ui_MainWindow):
         
         self.scene.addRect(0,0,axis_x,axis_y)
 
-        self.scene.addEllipse(0,0,10,10, brush = QBrush(QColor.fromRgb(120, 50, 255)))
-        self.scene.addEllipse(0,axis_y,10,10, brush = QBrush(QColor.fromRgb(120, 50, 255)))
-        self.scene.addEllipse(axis_x,0,10,10, brush = QBrush(QColor.fromRgb(120, 50, 255)))
-        self.scene.addEllipse(axis_x,axis_y,10,10, brush = QBrush(QColor.fromRgb(120, 50, 255)))
+        self.scene.addEllipse(0-8,0-8,15,15, brush = QBrush(QColor.fromRgb(120, 50, 255)))
+        self.scene.addEllipse(0-8,axis_y-8,15,15, brush = QBrush(QColor.fromRgb(120, 50, 255)))
+        self.scene.addEllipse(axis_x-8,0-8,15,15, brush = QBrush(QColor.fromRgb(120, 50, 255)))
+        self.scene.addEllipse(axis_x-8,axis_y-8,15,15, brush = QBrush(QColor.fromRgb(120, 50, 255)))
+
 
         self.scene.addLine(0,0,axis_x,0, pen = QPen(QColor.fromRgb(255, 0, 0)))
         self.scene.addLine(0,0,0,axis_y, pen = QPen(QColor.fromRgb(255, 0, 0)))
@@ -242,7 +243,7 @@ class Pyqt5_Serial(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.scene.addItem(rectangle_item)
                 
 
-        robot_item = QGraphicsEllipseItem(newPos[0]/10, newPos[1]/10, 15, 15)
+        robot_item = QGraphicsEllipseItem(newPos[0]/10, newPos[1]/10, 10, 10)
         robot_item.setBrush(QBrush(QColor.fromRgb(0, 255, 255)))
         self.scene.addItem(robot_item)
 

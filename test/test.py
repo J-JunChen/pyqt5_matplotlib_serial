@@ -1,18 +1,11 @@
+class Foo(object):
+    def __init__(self):
+              self._number_of_times = 0
 
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
+    def yourfunc(self, x, y):
+       for i in range(x):
+              for j in range(y):
+                     self._number_of_times += 1
+       print(self._number_of_times)
 
-# Data for plotting
-t = np.arange(0.0, 2.0, 0.01)
-s = 1 + np.sin(2 * np.pi * t)
-
-fig, ax = plt.subplots()
-ax.plot(t, s)
-
-ax.set(xlabel='time (s)', ylabel='voltage (mV)',
-       title='About as simple as it gets, folks')
-ax.grid()
-
-fig.savefig("test.png")
-plt.show()
+yourfunc = Foo().yourfunc(2,5)
