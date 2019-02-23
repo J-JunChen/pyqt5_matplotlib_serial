@@ -5,8 +5,9 @@ import os
 import serial
 import serial.tools.list_ports
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QMessageBox, QPushButton
-from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtWidgets import QMessageBox, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsRectItem, QGraphicsEllipseItem
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, pyqtSlot, QObject,QRectF
+from PyQt5.QtGui import QBrush, QPen, QColor
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.animation as animation
@@ -35,6 +36,9 @@ class Pyqt5_Serial(QtWidgets.QMainWindow, Ui_MainWindow):
         otherClass = MyDynamicMplCanvas()  # 信号和槽，传送数据给QDialoge
         self.serial_signal.connect(otherClass.robot_position)
         self.serial_signal.emit(0, 0)
+
+        self.graphicsView.scale(1,-1) # x轴倒转
+        self.graphics()
         
 
     def init(self):
@@ -157,6 +161,8 @@ class Pyqt5_Serial(QtWidgets.QMainWindow, Ui_MainWindow):
                             if tag_position[1] != -1:
                                 # print("标签坐标X:%f" %
                                 #       tag_position[0] + "，Y:%f" % tag_position[1])
+                                self.graphics([tag_position[0],tag_position[1]])
+
                                 self.serial_signal.connect(
                                     otherClass.robot_position)
                                 self.serial_signal.emit(
@@ -181,24 +187,89 @@ class Pyqt5_Serial(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # ValueError: cannot convert float NaN to integer #17
 
-    def init_plot(self):
-        self.fig, self.ax = plt.subplots()
-        self.x, self.y = (), ()  # 元组数据结构，只能替换
-        self.sc = self.ax.scatter(self.x, self.y)
+    def graphics(self,newPos = [0,0]):
+        """ qt绘图 """
+        axis_x = 750
+        axis_y = 500
+        
+        # self.rect = QRectF(0,0,w-10,h-10)
+        # self.scene = QGraphicsScene(self.rect)
+        self.scene = QGraphicsScene()
 
-        plt.xlim(0, 7500)
-        plt.ylim(0, 5000)
-        self.currentAxis = plt.gca()  # gca(): Get the current Axes
-        self.currentAxis.set_aspect('equal', adjustable='box')  # x,y 相同的分度尺
+        self.graphicsView.setScene(self.scene)
+        
+        
+        self.scene.addRect(0,0,axis_x,axis_y)
 
-        ani = animation.FuncAnimation(self.fig, self.animate,
-                                      frames=2, interval=100, repeat=True)
-        # plt.show()
+        self.scene.addEllipse(0,0,10,10, brush = QBrush(QColor.fromRgb(120, 50, 255)))
+        self.scene.addEllipse(0,axis_y,10,10, brush = QBrush(QColor.fromRgb(120, 50, 255)))
+        self.scene.addEllipse(axis_x,0,10,10, brush = QBrush(QColor.fromRgb(120, 50, 255)))
+        self.scene.addEllipse(axis_x,axis_y,10,10, brush = QBrush(QColor.fromRgb(120, 50, 255)))
 
-    def animate(self, i):
-        self.x = (np.random.rand(1)*5000)
-        self.y = (np.random.rand(1)*5000)
-        self.sc.set_offsets(np.c_[self.x, self.y])
+        self.scene.addLine(0,0,axis_x,0, pen = QPen(QColor.fromRgb(255, 0, 0)))
+        self.scene.addLine(0,0,0,axis_y, pen = QPen(QColor.fromRgb(255, 0, 0)))
+
+
+        self.anchor_0 = np.array([0, 0], dtype=np.int64)
+        self.anchor_1 = np.array([axis_x, 0], dtype=np.int64)
+        self.anchor_2 = np.array([0, axis_y], dtype=np.int64)
+
+        brick_width = 1000/10  # 砖长：300mm
+        brick_height = 1000/10
+        self.brick_gap = 50/10  # 砖间隙：5mm
+
+        global height_num, width_num
+        height_num = np.int(self.anchor_2[1]/brick_height)
+        width_num = np.int(self.anchor_1[0]/brick_width)
+
+        global bricks  # 全局
+        bricks = np.zeros((width_num*height_num, 5), dtype=int)  # 可利用json数据类型
+
+        """ 砖摆放，从x,y轴出发 """
+        for j in range(height_num):
+            for i in range(width_num):
+
+                self.brick_x = i*(self.brick_gap+brick_width)
+                self.brick_y = j*(self.brick_gap+brick_height)
+
+                bricks[i+j] = [i, j, self.brick_x,
+                               self.brick_y, 0]  # 填写每一块砖的信息
+                # print(bricks[i+j])
+
+                rectangle_item = QGraphicsRectItem(self.brick_x, self.brick_y, brick_width, brick_height)
+                # Add the patch to the Axes
+                # currentAxis.add_patch(self.rectangle)
+                self.scene.addItem(rectangle_item)
+                
+
+        robot_item = QGraphicsEllipseItem(newPos[0]/10, newPos[1]/10, 15, 15)
+        robot_item.setBrush(QBrush(QColor.fromRgb(0, 255, 255)))
+        self.scene.addItem(robot_item)
+
+    def wheelEvent(self, event):
+        """
+            Zoom in or out of the view.
+        """
+        zoomInFactor = 1.25
+        zoomOutFactor = 1 / zoomInFactor
+
+        # Save the scene pos
+        oldPos = self.graphicsView.mapToScene(event.pos())
+        # print("oldPos：%d" %oldPos[0])
+
+        # Zoom
+        if event.angleDelta().y() > 0:
+            zoomFactor = zoomInFactor
+        else:
+            zoomFactor = zoomOutFactor
+        self.graphicsView.scale(zoomFactor, zoomFactor)
+
+        # Get the new position
+        newPos = self.graphicsView.mapToScene(event.pos())
+
+        # Move scene to old position
+        delta = newPos - oldPos
+        self.graphicsView.translate(delta.x(), delta.y())
 
 
 class MyMplCanvas(FigureCanvas):
